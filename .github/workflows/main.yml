@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest  # 使用 GitHub 最新的 macOS 运行环境
+    runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -20,16 +20,16 @@ jobs:
       - name: Build Unsigned IPA
         run: |
           mkdir -p build
-          # 创建一个临时的 Xcode 项目结构以便编译 (没有 .xcodeproj 文件时手动编译 swift 文件的技巧)
           
-          # 1. 编译 Swift 文件为二进制
-          swiftc -target arm64-apple-ios15.0 -sdk $(xcrun --show-sdk-path --sdk iphoneos) -O -o BundleCheckerBinary BundleChecker/BundleCheckerApp.swift BundleChecker/ContentView.swift
+          # 【重点修改】只编译 ContentView.swift，因为它现在包含了所有代码
+          # 注意：删除了 BundleChecker/BundleCheckerApp.swift 的引用
+          swiftc -target arm64-apple-ios15.0 -sdk $(xcrun --show-sdk-path --sdk iphoneos) -O -o BundleCheckerBinary BundleChecker/ContentView.swift
           
-          # 2. 构建 .app 目录结构
+          # 构建 .app 结构
           mkdir -p Payload/BundleChecker.app
           mv BundleCheckerBinary Payload/BundleChecker.app/
           
-          # 3. 创建必要的 Info.plist (iOS 18 需要明确的 BundleID 和版本)
+          # 写入 Info.plist
           cat <<EOF > Payload/BundleChecker.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -59,7 +59,7 @@ jobs:
           </plist>
           EOF
 
-          # 4. 打包为 IPA
+          # 打包
           zip -r BundleChecker.ipa Payload
 
       - name: Upload IPA
