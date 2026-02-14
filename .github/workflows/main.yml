@@ -21,15 +21,15 @@ jobs:
         run: |
           mkdir -p build
           
-          # 【重点修改】只编译 ContentView.swift，因为它现在包含了所有代码
-          # 注意：删除了 BundleChecker/BundleCheckerApp.swift 的引用
-          swiftc -target arm64-apple-ios15.0 -sdk $(xcrun --show-sdk-path --sdk iphoneos) -O -o BundleCheckerBinary BundleChecker/ContentView.swift
+          # 【关键修改】添加了 -parse-as-library 参数
+          # 这会告诉编译器这是一个包含 @main 入口的 App，而不是脚本
+          swiftc -parse-as-library -target arm64-apple-ios15.0 -sdk $(xcrun --show-sdk-path --sdk iphoneos) -O -o BundleCheckerBinary BundleChecker/ContentView.swift
           
           # 构建 .app 结构
           mkdir -p Payload/BundleChecker.app
           mv BundleCheckerBinary Payload/BundleChecker.app/
           
-          # 写入 Info.plist
+          # 写入 Info.plist (确保 BundleID 与代码一致)
           cat <<EOF > Payload/BundleChecker.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
